@@ -1,31 +1,55 @@
 package com.crooks;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import twitter4j.*;
 
 import java.io.IOException;
+import java.sql.Date;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
 
 
 public class Main {
 
     public static void main(String[] args) throws TwitterException, IOException {
-        Twitter twitter = TwitterFactory.getSingleton();
-        //Status status = twitter.updateStatus("Hello World! testing, testing, testies, 1, 2 ...3?");
-        Query query = new Query("FollyBeach");
-        QueryResult results = twitter.search((query));
+        MSWprop secretKey = new MSWprop();
+        String url = "http://magicseaweed.com/api/" + secretKey.key + "/forecast/?spot_id=672";
 
-        for(Status tweet : results.getTweets()){
-            System.out.println(tweet.getUser().getScreenName() + ":" + tweet.getText() );
+        String rawJson = grabJson(url);
+
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode mainJson = mapper.readValue(rawJson, JsonNode.class);
+        ArrayList<SwellPeriod> swellArray = new ArrayList<>();
+        for (JsonNode timeStamp : mainJson) {
+            int minHeight = timeStamp.get("swell").findValue("minBreakingHeight").asInt();
+            int maxheight = timeStamp.get("swell").findValue("maxBreakingHeight").asInt();
+            long unixTime = timeStamp.findValue("localTimestamp").asInt();
+            String windDirection = timeStamp.get("wind").findValue("compassDirection").asText();
+            int windSpeed = timeStamp.get("wind").findValue("speed").asInt();
+            SwellPeriod sp = new SwellPeriod(minHeight, maxheight, unixTime, windDirection, windSpeed);
+            swellArray.add(sp);
         }
 
-
-        Document doc = Jsoup.connect("http://www.surfline.com/surf-report/folly-beach-pier-southside-southeast_5294/").get();
-        Element content = doc.getElementById("current-surf-range");
-
-
-        System.out.println(content);
+        swellArray.stream()
+                .sorted((s1,s2) -> Integer.compare((int) s1.getUnixTime(), (int) s2.getUnixTime()))
+                .forEach(swell -> System.out.println(swell.getUnixTime()));
     }
+
+    public static String grabJson(String mswUrl) throws IOException {
+        OkHttpClient client = new OkHttpClient();
+
+        Request request = new Request.Builder().url(mswUrl).build();
+        Response response = client.newCall(request).execute();
+        return response.body().string();
+    }
+
 }
