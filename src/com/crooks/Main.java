@@ -9,16 +9,11 @@ import okhttp3.Response;
 import twitter4j.*;
 
 import java.io.IOException;
-import java.sql.Date;
-import java.sql.Time;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.ArrayList;
 
 
 public class Main {
+
 
     public static void main(String[] args) throws TwitterException, IOException {
         MSWprop secretKey = new MSWprop();
@@ -39,10 +34,13 @@ public class Main {
             swellArray.add(sp);
         }
 
+        //TODO: "Convert to Spring project to have it running and access Asynchronous functionality
         swellArray.stream()
                 .sorted((s1,s2) -> Integer.compare((int) s1.getUnixTime(), (int) s2.getUnixTime()))
                 .forEach(swell -> System.out.println(swell.getUnixTime()));
     }
+
+
 
     public static String grabJson(String mswUrl) throws IOException {
         OkHttpClient client = new OkHttpClient();

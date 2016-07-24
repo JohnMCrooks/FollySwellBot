@@ -10,6 +10,7 @@ public class SwellPeriod {
     String windDirection;
     int windSpeed;
 
+
     public SwellPeriod(int minHeight, int maxHeight, long unixTime, String windDirection, int windSpeed) {
         this.minHeight = minHeight;
         this.maxHeight = maxHeight;
