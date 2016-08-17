@@ -9,6 +9,8 @@ import okhttp3.Response;
 import twitter4j.*;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 
 
@@ -38,6 +40,13 @@ public class Main {
         swellArray.stream()
                 .sorted((s1,s2) -> Integer.compare((int) s1.getUnixTime(), (int) s2.getUnixTime()))
                 .forEach(swell -> System.out.println(swell.getUnixTime()));
+
+        LocalTime time = null;
+        assert time != null;
+        time = time.toLocalTime();
+        System.out.println(time);
+
+
     }
 
 
