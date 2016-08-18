@@ -45,7 +45,7 @@ public class Main {
             int counter = 0;
             while (counter < swellArray.size() - 1) {
                 if (now.getEpochSecond() <= swellArray.get(counter + 1).getUnixTime() && now.getEpochSecond() > swellArray.get(counter).getUnixTime()) {
-                    String tweetFormmated = String.format("Current Swell Height: %d-%d ft. with winds at %d mph from %s #FollyBeach # #SurfReport #MagicSeaWeed",
+                    String tweetFormmated = String.format("Current Swell Height: %d-%d ft. with winds at %d mph from %s #FollyBeach #surfing #Charleston #Folly #SurfReport #MagicSeaWeed",
                             swellArray.get(counter + 1).getMinHeight(), swellArray.get(counter + 1).getMaxHeight(), swellArray.get(counter + 1).getWindSpeed(), swellArray.get(counter + 1).getWindDirection());
 
                     sendTweet(swellArray, tweetFormmated);

@@ -45,3 +45,5 @@ crashlytics.properties
 crashlytics-build.properties
 fabric.properties
 
+twitter4j.properties
+src/com/crooks/MSWprop.java
