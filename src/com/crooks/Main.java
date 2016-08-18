@@ -3,14 +3,14 @@ package com.crooks;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sun.xml.internal.ws.api.message.Packet;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import twitter4j.*;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.*;
 import java.util.ArrayList;
 
 
@@ -36,20 +36,38 @@ public class Main {
             swellArray.add(sp);
         }
 
-        //TODO: "Convert to Spring project to have it running and access Asynchronous functionality
+        //sort the array
         swellArray.stream()
                 .sorted((s1,s2) -> Integer.compare((int) s1.getUnixTime(), (int) s2.getUnixTime()))
                 .forEach(swell -> System.out.println(swell.getUnixTime()));
 
-        LocalTime time = null;
-        assert time != null;
-        time = time.toLocalTime();
-        System.out.println(time);
+        Instant now = Instant.now();
 
+
+        int counter = 0;
+        while(counter < swellArray.size()-1){
+            //loop through the array and find the two times the current time sits between.
+            if (now.getEpochSecond() <= swellArray.get(counter+1).getUnixTime() && now.getEpochSecond()  >swellArray.get(counter).getUnixTime()){
+                //sendTweet(swellArray);
+
+
+                System.out.println("Swell Height: " + swellArray.get(counter+1).getMinHeight() + "-" +swellArray.get(counter+1).getMaxHeight() + "ft. with winds at " + swellArray.get(counter+1).getWindSpeed() + "mph from " + swellArray.get(counter+1).getWindDirection() );
+                counter++;
+            }else{
+             counter++;
+            }
+
+        }
+
+
+
+    } // End Main Method
+
+    public static void sendTweet(ArrayList<SwellPeriod> swellArray) throws TwitterException {
+        Twitter twitter = TwitterFactory.getSingleton();
+        Status status = twitter.updateStatus("Current Conditions at the Folly Pier:");
 
     }
-
-
 
     public static String grabJson(String mswUrl) throws IOException {
         OkHttpClient client = new OkHttpClient();
