@@ -1,13 +1,18 @@
 package com.crooks;
 
 
+import com.fasterxml.jackson.core.util.Instantiatable;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.sarxos.webcam.Webcam;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import twitter4j.*;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.time.*;
 import java.util.ArrayList;
@@ -29,6 +34,9 @@ public class Main {
             ObjectMapper mapper = new ObjectMapper();
             JsonNode mainJson = mapper.readValue(rawJson, JsonNode.class);
             ArrayList<SwellPeriod> swellArray = new ArrayList<>();
+
+
+            //break the information out of json into
             for (JsonNode timeStamp : mainJson) {
                 int minHeight = timeStamp.get("swell").findValue("minBreakingHeight").asInt();
                 int maxheight = timeStamp.get("swell").findValue("maxBreakingHeight").asInt();
@@ -47,14 +55,19 @@ public class Main {
                 if (now.getEpochSecond() <= swellArray.get(counter + 1).getUnixTime() && now.getEpochSecond() > swellArray.get(counter).getUnixTime()) {
                     String tweetFormmated = String.format("Current Swell Height: %d-%d ft. with winds at %d mph from %s #FollyBeach #surfing #Charleston #Folly #SurfReport #MagicSeaWeed",
                             swellArray.get(counter + 1).getMinHeight(), swellArray.get(counter + 1).getMaxHeight(), swellArray.get(counter + 1).getWindSpeed(), swellArray.get(counter + 1).getWindDirection());
-
-                    sendTweet(swellArray, tweetFormmated);
+                    captureImage();
+                    //sendTweet(swellArray, tweetFormmated);
                     counter++;
                 } else {
                     counter++;
                 }
             }
             Thread.sleep(10800000);
+
+            //Address for webcam to use for screenshots - http://208.43.68.139/surfchex/follybeach-super/playlist.m3u8
+
+
+
         }
     } // End Main Method
 
@@ -62,6 +75,18 @@ public class Main {
         Twitter twitter = TwitterFactory.getSingleton();
         Status status = twitter.updateStatus(tweetFormmated);
         System.out.println("The People have been Informed.");
+    }
+
+    public static void captureImage() throws IOException {
+        String follyCamURL= "http://208.43.68.139/surfchex/follybeach-super/playlist.m3u8";
+        Instant instant = Instant.now();
+        Webcam webcam = Webcam.getDefault();
+        webcam.open();
+
+        BufferedImage image = webcam.getImage();
+        ImageIO.write(image, "PNG", new File(instant+".png"));
+
+        System.out.println("File captured and saved");
     }
 
     public static String grabJson(String mswUrl) throws IOException {
