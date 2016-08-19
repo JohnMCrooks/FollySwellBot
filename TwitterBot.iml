@@ -13,5 +13,6 @@
     <orderEntry type="library" name="com.fasterxml.jackson.core:jackson-databind:2.8.0" level="project" />
     <orderEntry type="library" name="com.squareup.okhttp3:okhttp:3.3.1" level="project" />
     <orderEntry type="library" name="com.github.sarxos:webcam-capture:0.3.11" level="project" />
+    <orderEntry type="library" name="com.github.sarxos:webcam-capture-driver-ipcam:0.3.11" level="project" />
   </component>
 </module>

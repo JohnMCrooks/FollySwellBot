@@ -1,10 +1,14 @@
 package com.crooks;
 
 
-import com.fasterxml.jackson.core.util.Instantiatable;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.sarxos.webcam.Webcam;
+import com.github.sarxos.webcam.*;
+import com.github.sarxos.webcam.ds.ipcam.IpCamDevice;
+import com.github.sarxos.webcam.ds.ipcam.IpCamDeviceRegistry;
+import com.github.sarxos.webcam.ds.ipcam.IpCamDriver;
+import com.github.sarxos.webcam.ds.ipcam.IpCamMode;
+import com.github.sarxos.webcam.ds.ipcam.impl.IpCamHttpClient;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -20,6 +24,9 @@ import java.util.ArrayList;
 
 public class Main {
 
+    static {
+        Webcam.setDriver(new IpCamDriver());
+    }
 
     public static void main(String[] args) throws TwitterException, IOException, InterruptedException {
         boolean cantStopThisTrain = true;
@@ -80,10 +87,16 @@ public class Main {
     public static void captureImage() throws IOException {
         String follyCamURL= "http://208.43.68.139/surfchex/follybeach-super/playlist.m3u8";
         Instant instant = Instant.now();
-        Webcam webcam = Webcam.getDefault();
+
+        IpCamDeviceRegistry.register("Folly", follyCamURL, IpCamMode.PUSH);
+        IpCamDevice device = IpCamDeviceRegistry.getIpCameras().get(0);
+        device.getImage();
+
+        Webcam webcam = (Webcam) Webcam.getWebcams().get(0);
+        webcam.toString();
         webcam.open();
 
-        BufferedImage image = webcam.getImage();
+        BufferedImage image = device.getImage();
         ImageIO.write(image, "PNG", new File(instant+".png"));
 
         System.out.println("File captured and saved");
