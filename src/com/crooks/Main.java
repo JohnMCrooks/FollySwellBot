@@ -93,8 +93,6 @@ public class Main {
         device.getImage();
 
         Webcam webcam = (Webcam) Webcam.getWebcams().get(0);
-        webcam.toString();
-        webcam.open();
 
         BufferedImage image = device.getImage();
         ImageIO.write(image, "PNG", new File(instant+".png"));
