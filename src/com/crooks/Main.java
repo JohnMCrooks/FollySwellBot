@@ -43,7 +43,7 @@ public class Main {
             ArrayList<SwellPeriod> swellArray = new ArrayList<>();
 
 
-            //break the information out of json into
+            //break the information out of json into class objects
             for (JsonNode timeStamp : mainJson) {
                 int minHeight = timeStamp.get("swell").findValue("minBreakingHeight").asInt();
                 int maxheight = timeStamp.get("swell").findValue("maxBreakingHeight").asInt();
@@ -62,19 +62,15 @@ public class Main {
                 if (now.getEpochSecond() <= swellArray.get(counter + 1).getUnixTime() && now.getEpochSecond() > swellArray.get(counter).getUnixTime()) {
                     String tweetFormmated = String.format("Current Swell Height: %d-%d ft. with winds at %d mph from %s #FollyBeach #surfing #Charleston #Folly #SurfReport #MagicSeaWeed",
                             swellArray.get(counter + 1).getMinHeight(), swellArray.get(counter + 1).getMaxHeight(), swellArray.get(counter + 1).getWindSpeed(), swellArray.get(counter + 1).getWindDirection());
-                    captureImage();
-                    //sendTweet(swellArray, tweetFormmated);
+                    //captureImage();
+                    sendTweet(swellArray, tweetFormmated);
                     counter++;
                 } else {
                     counter++;
                 }
             }
             Thread.sleep(10800000);
-
             //Address for webcam to use for screenshots - http://208.43.68.139/surfchex/follybeach-super/playlist.m3u8
-
-
-
         }
     } // End Main Method
 
@@ -84,21 +80,27 @@ public class Main {
         System.out.println("The People have been Informed.");
     }
 
-    public static void captureImage() throws IOException {
-        String follyCamURL= "http://208.43.68.139/surfchex/follybeach-super/playlist.m3u8";
-        Instant instant = Instant.now();
-
-        IpCamDeviceRegistry.register("Folly", follyCamURL, IpCamMode.PUSH);
-        IpCamDevice device = IpCamDeviceRegistry.getIpCameras().get(0);
-        device.getImage();
-
-        Webcam webcam = (Webcam) Webcam.getWebcams().get(0);
-
-        BufferedImage image = device.getImage();
-        ImageIO.write(image, "PNG", new File(instant+".png"));
-
-        System.out.println("File captured and saved");
-    }
+//    public static void captureImage(){
+//        String follyCamURL= "http://208.43.68.139/surfchex/follybeach-super/playlist.m3u8";
+//        Instant instant = Instant.now();
+//
+//        try{  IpCamDeviceRegistry.register("Folly", follyCamURL, IpCamMode.PUSH);
+//        IpCamDeviceRegistry.isRegistered(follyCamURL);
+//        }
+//        catch (IOException e){
+//          System.err.println("IpCam Registration Failed");
+//        }
+//        IpCamDevice device = new IpCamDevice();
+//
+//        BufferedImage image = device.getImage();
+//        try {
+//            ImageIO.write(image, "PNG", new File(instant+".png"));
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//
+//        System.out.println("File captured and saved at " + instant.toString());
+//    }
 
     public static String grabJson(String mswUrl) throws IOException {
         OkHttpClient client = new OkHttpClient();
