@@ -19,11 +19,15 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.time.*;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.ArrayList;
 
 
 public class Main {
 
+    static TemporalUnit minutes = ChronoUnit.MINUTES;
+    static TemporalUnit hours = ChronoUnit.HOURS;
     static {
         Webcam.setDriver(new IpCamDriver());
     }
@@ -58,20 +62,20 @@ public class Main {
             //sort the array
             swellArray.stream().sorted((s1, s2) -> Integer.compare((int) s1.getUnixTime(), (int) s2.getUnixTime()));
 
+
+            LocalTime currentTime = LocalTime.now().truncatedTo(minutes);
+            if (currentTime.isAfter(LocalTime.NOON)){
+                currentTime = currentTime.minus(12, hours);
+            }
             int counter = 0;
             while (counter < swellArray.size() - 1) {
                 if (now.getEpochSecond() <= swellArray.get(counter + 1).getUnixTime() && now.getEpochSecond() > swellArray.get(counter).getUnixTime()) {
-                    String tweetFormmated = String.format("Swell Height: %d-%d ft. with winds at %d mph from %s #FollyBeach #surfing #Charleston #SurfReport #MagicSeaWeed",
-                            swellArray.get(counter + 1).getMinHeight(), swellArray.get(counter + 1).getMaxHeight(), swellArray.get(counter + 1).getWindSpeed(), swellArray.get(counter + 1).getWindDirection());
-
-                    //Check to make sure it isn't a duplicate tweet, The Twitter API is NOT a fan of duplicates and will return a 403.
-                    if (tweetFormmated.equals(lastTweet)){
-                        tweetFormmated = "No changes - " + tweetFormmated;
-                    }
+                    String tweetFormmated = String.format("%s - Swell Height: %d-%d ft. with winds at %d mph out of the %s #FollyBeach #surfing #Charleston #SurfReport #MagicSeaWeed",
+                            currentTime ,swellArray.get(counter + 1).getMinHeight(), swellArray.get(counter + 1).getMaxHeight(), swellArray.get(counter + 1).getWindSpeed(), swellArray.get(counter + 1).getWindDirection());
+                    System.out.println(tweetFormmated);
 
                     //captureImage();
-                    sendTweet(swellArray, tweetFormmated);
-                    lastTweet = tweetFormmated;
+//                    sendTweet(tweetFormmated);
                     counter++;
                 } else {
                     counter++;
@@ -81,7 +85,7 @@ public class Main {
         }
     } // End Main Method
 
-    public static void sendTweet(ArrayList<SwellPeriod> swellArray, String tweetFormmated) throws TwitterException {
+    public static void sendTweet(String tweetFormmated) throws TwitterException {
         Twitter twitter = TwitterFactory.getSingleton();
 
         Status status = twitter.updateStatus(tweetFormmated);
@@ -110,16 +114,12 @@ public class Main {
 //        System.out.println("File captured and saved at " + instant.toString());
 //    }
 
-    public static String grabJson(String mswUrl) {
+    public static String grabJson(String mswUrl) throws IOException {
         OkHttpClient client = new OkHttpClient();
 
         Request request = new Request.Builder().url(mswUrl).build();
-        Response response = null;
-        try {
-            response = client.newCall(request).execute();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        Response response = client.newCall(request).execute();
+
         return response.body().string();
     }
 }
