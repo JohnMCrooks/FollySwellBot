@@ -30,6 +30,7 @@ public class Main {
 
     public static void main(String[] args) throws TwitterException, IOException, InterruptedException {
         boolean cantStopThisTrain = true;
+        String lastTweet = null;
 
         while (cantStopThisTrain == true) {
             MSWprop secretKey = new MSWprop();
@@ -60,22 +61,27 @@ public class Main {
             int counter = 0;
             while (counter < swellArray.size() - 1) {
                 if (now.getEpochSecond() <= swellArray.get(counter + 1).getUnixTime() && now.getEpochSecond() > swellArray.get(counter).getUnixTime()) {
-                    String tweetFormmated = String.format("Current Swell Height: %d-%d ft. with winds at %d mph from %s #FollyBeach #surfing #Charleston #Folly #SurfReport #MagicSeaWeed",
+                    String tweetFormmated = String.format("Swell Height: %d-%d ft. with winds at %d mph from %s #FollyBeach #surfing #Charleston #SurfReport #MagicSeaWeed",
                             swellArray.get(counter + 1).getMinHeight(), swellArray.get(counter + 1).getMaxHeight(), swellArray.get(counter + 1).getWindSpeed(), swellArray.get(counter + 1).getWindDirection());
+                    if (tweetFormmated.equals(lastTweet)){
+                        tweetFormmated = "No significant change - " + tweetFormmated;
+
+                    }
                     //captureImage();
                     sendTweet(swellArray, tweetFormmated);
+                    lastTweet = tweetFormmated;
                     counter++;
                 } else {
                     counter++;
                 }
             }
             Thread.sleep(10800000);
-            //Address for webcam to use for screenshots - http://208.43.68.139/surfchex/follybeach-super/playlist.m3u8
         }
     } // End Main Method
 
     public static void sendTweet(ArrayList<SwellPeriod> swellArray, String tweetFormmated) throws TwitterException {
         Twitter twitter = TwitterFactory.getSingleton();
+
         Status status = twitter.updateStatus(tweetFormmated);
         System.out.println("The People have been Informed.");
     }
