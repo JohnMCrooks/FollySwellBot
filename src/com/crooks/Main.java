@@ -63,10 +63,12 @@ public class Main {
                 if (now.getEpochSecond() <= swellArray.get(counter + 1).getUnixTime() && now.getEpochSecond() > swellArray.get(counter).getUnixTime()) {
                     String tweetFormmated = String.format("Swell Height: %d-%d ft. with winds at %d mph from %s #FollyBeach #surfing #Charleston #SurfReport #MagicSeaWeed",
                             swellArray.get(counter + 1).getMinHeight(), swellArray.get(counter + 1).getMaxHeight(), swellArray.get(counter + 1).getWindSpeed(), swellArray.get(counter + 1).getWindDirection());
-                    if (tweetFormmated.equals(lastTweet)){
-                        tweetFormmated = "No significant change - " + tweetFormmated;
 
+                    //Check to make sure it isn't a duplicate tweet, The Twitter API is NOT a fan of duplicates and will return a 403.
+                    if (tweetFormmated.equals(lastTweet)){
+                        tweetFormmated = "No changes - " + tweetFormmated;
                     }
+
                     //captureImage();
                     sendTweet(swellArray, tweetFormmated);
                     lastTweet = tweetFormmated;
@@ -108,11 +110,16 @@ public class Main {
 //        System.out.println("File captured and saved at " + instant.toString());
 //    }
 
-    public static String grabJson(String mswUrl) throws IOException {
+    public static String grabJson(String mswUrl) {
         OkHttpClient client = new OkHttpClient();
 
         Request request = new Request.Builder().url(mswUrl).build();
-        Response response = client.newCall(request).execute();
+        Response response = null;
+        try {
+            response = client.newCall(request).execute();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return response.body().string();
     }
 }
