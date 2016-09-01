@@ -3,15 +3,18 @@ package com.crooks;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import com.github.sarxos.webcam.*;
 import com.github.sarxos.webcam.ds.ipcam.IpCamDevice;
 import com.github.sarxos.webcam.ds.ipcam.IpCamDeviceRegistry;
 import com.github.sarxos.webcam.ds.ipcam.IpCamDriver;
 import com.github.sarxos.webcam.ds.ipcam.IpCamMode;
 import com.github.sarxos.webcam.ds.ipcam.impl.IpCamHttpClient;
+
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+
 import twitter4j.*;
 
 import javax.imageio.ImageIO;
@@ -21,6 +24,8 @@ import java.io.IOException;
 import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 
 public class Main {
@@ -31,6 +36,7 @@ public class Main {
     public static void main(String[] args) throws TwitterException, IOException, InterruptedException {
         boolean cantStopThisTrain = true;
         String lastTweet = null;
+        Twitter twitter = new TwitterFactory().getSingleton();
 
         while (cantStopThisTrain == true) {
             MSWprop secretKey = new MSWprop();
@@ -59,20 +65,22 @@ public class Main {
             //sort the array
             swellArray.stream().sorted((s1, s2) -> Integer.compare((int) s1.getUnixTime(), (int) s2.getUnixTime()));
 
-
+            //Convert the time to non-military format
             LocalTime currentTime = LocalTime.now().truncatedTo(ChronoUnit.MINUTES);
             if (currentTime.isAfter(LocalTime.NOON)){
                 currentTime = currentTime.minus(12, ChronoUnit.HOURS);
             }
+
             int counter = 0;
             while (counter < swellArray.size() - 1) {
+                //Forecast time stamps are sent as unix time stamps, This compares the current time to the forecasts to grab the one following the current time.
                 if (now.getEpochSecond() <= swellArray.get(counter + 1).getUnixTime() && now.getEpochSecond() > swellArray.get(counter).getUnixTime()) {
                     String tweetFormmated = String.format("%s - Swell Height: %d-%d ft. with winds at %d mph out of the %s #FollyBeach #surfing #Charleston #SurfReport #MagicSeaWeed",
                             currentTime ,swellArray.get(counter + 1).getMinHeight(), swellArray.get(counter + 1).getMaxHeight(), swellArray.get(counter + 1).getWindSpeed(), swellArray.get(counter + 1).getWindDirection());
-                    System.out.println(tweetFormmated);
 
                     //captureImage();
-                    sendTweet(tweetFormmated);
+                    //sendTweet(tweetFormmated);
+                    followFollowers(twitter);
                     counter++;
                 } else {
                     counter++;
@@ -89,12 +97,12 @@ public class Main {
             System.out.println(Instant.now().truncatedTo(ChronoUnit.MINUTES) + " - The People have been Informed.\n");
         }
         catch(TwitterException statusException){
-            statusException.printStackTrace();
             System.out.println("failed to send status update at: " + LocalTime.now().truncatedTo(ChronoUnit.MINUTES));
+            statusException.printStackTrace();
         }
 
 
-    }
+    }// End SendTweet()
 
 //    public static void captureImage(){
 //        String follyCamURL= "http://208.43.68.139/surfchex/follybeach-super/playlist.m3u8";
@@ -118,6 +126,31 @@ public class Main {
 //        System.out.println("File captured and saved at " + instant.toString());
 //    }
 
+    public static void followFollowers(Twitter twitter) throws TwitterException {
+        PagableResponseList<User> followersList = twitter.getFollowersList("FollySwellBot", -1);
+        String[] myFollowerArray = new String[followersList.size()];
+
+        int count=0;
+        for (User user: followersList) {
+            myFollowerArray[count] = user.getScreenName();
+            count++;
+        }
+        System.out.println(myFollowerArray.toString());
+        ResponseList<Friendship> friendships = twitter.lookupFriendships(myFollowerArray);
+
+        //Check each follower to see if it's mutual, If it's not follow them back.
+        for (Friendship friendship: friendships){
+            if (!friendship.isFollowing()){
+                try{
+                    twitter.createFriendship(friendship.getId());
+                }catch (TwitterException addfriendfail){
+                    addfriendfail.printStackTrace();
+                    continue;
+                }
+            }
+        }
+    }
+
     public static String grabJson(String mswUrl) throws IOException {
         OkHttpClient client = new OkHttpClient();
         Request request = new Request.Builder().url(mswUrl).build();
@@ -129,5 +162,6 @@ public class Main {
 
         }
         return response.body().string();
-    }
-}
+    }//End grabJson()
+
+}//End Main.java
