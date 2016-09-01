@@ -80,7 +80,7 @@ public class Main {
 
                     //captureImage();
                     //sendTweet(tweetFormmated);
-                    followFollowers(twitter);
+                    //followFollowers(twitter);
                     counter++;
                 } else {
                     counter++;
@@ -138,13 +138,13 @@ public class Main {
         System.out.println(myFollowerArray.toString());
         ResponseList<Friendship> friendships = twitter.lookupFriendships(myFollowerArray);
 
-        //Check each follower to see if it's mutual, If it's not follow them back.
+        //Check each follower to see if it's mutual, If it's not grab their ID and follow them back.
         for (Friendship friendship: friendships){
             if (!friendship.isFollowing()){
                 try{
                     twitter.createFriendship(friendship.getId());
-                }catch (TwitterException addfriendfail){
-                    addfriendfail.printStackTrace();
+                }catch (TwitterException addFriendFail){
+                    addFriendFail.printStackTrace();
                     continue;
                 }
             }
