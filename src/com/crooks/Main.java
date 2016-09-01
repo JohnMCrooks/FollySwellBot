@@ -20,14 +20,10 @@ import java.io.File;
 import java.io.IOException;
 import java.time.*;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
 import java.util.ArrayList;
 
 
 public class Main {
-
-    static TemporalUnit minutes = ChronoUnit.MINUTES;
-    static TemporalUnit hours = ChronoUnit.HOURS;
     static {
         Webcam.setDriver(new IpCamDriver());
     }
@@ -41,14 +37,15 @@ public class Main {
             String url = "http://magicseaweed.com/api/" + secretKey.key + "/forecast/?spot_id=672";
             Instant now = Instant.now();
 
+            //Oceanic forecasting can change rapidly, so I hit the API every time instead of retaining a single request and using each of the individually contained forecasts.
             String rawJson = grabJson(url);
-
             ObjectMapper mapper = new ObjectMapper();
+            //Map the Json into a main node
             JsonNode mainJson = mapper.readValue(rawJson, JsonNode.class);
             ArrayList<SwellPeriod> swellArray = new ArrayList<>();
 
 
-            //break the information out of json into class objects
+            //break the information out of the main node into individual class objects and insert them into an ArrayList.
             for (JsonNode timeStamp : mainJson) {
                 int minHeight = timeStamp.get("swell").findValue("minBreakingHeight").asInt();
                 int maxheight = timeStamp.get("swell").findValue("maxBreakingHeight").asInt();
@@ -63,9 +60,9 @@ public class Main {
             swellArray.stream().sorted((s1, s2) -> Integer.compare((int) s1.getUnixTime(), (int) s2.getUnixTime()));
 
 
-            LocalTime currentTime = LocalTime.now().truncatedTo(minutes);
+            LocalTime currentTime = LocalTime.now().truncatedTo(ChronoUnit.MINUTES);
             if (currentTime.isAfter(LocalTime.NOON)){
-                currentTime = currentTime.minus(12, hours);
+                currentTime = currentTime.minus(12, ChronoUnit.HOURS);
             }
             int counter = 0;
             while (counter < swellArray.size() - 1) {
@@ -75,7 +72,7 @@ public class Main {
                     System.out.println(tweetFormmated);
 
                     //captureImage();
-//                    sendTweet(tweetFormmated);
+                    sendTweet(tweetFormmated);
                     counter++;
                 } else {
                     counter++;
@@ -85,11 +82,18 @@ public class Main {
         }
     } // End Main Method
 
-    public static void sendTweet(String tweetFormmated) throws TwitterException {
-        Twitter twitter = TwitterFactory.getSingleton();
+    public static void sendTweet(String tweetFormmated) throws TwitterException, IOException {
+        try{
+            Twitter twitter = TwitterFactory.getSingleton();
+            Status status = twitter.updateStatus(tweetFormmated);
+            System.out.println(Instant.now().truncatedTo(ChronoUnit.MINUTES) + " - The People have been Informed.\n");
+        }
+        catch(TwitterException statusException){
+            statusException.printStackTrace();
+            System.out.println("failed to send status update at: " + LocalTime.now().truncatedTo(ChronoUnit.MINUTES));
+        }
 
-        Status status = twitter.updateStatus(tweetFormmated);
-        System.out.println("The People have been Informed.");
+
     }
 
 //    public static void captureImage(){
@@ -116,10 +120,14 @@ public class Main {
 
     public static String grabJson(String mswUrl) throws IOException {
         OkHttpClient client = new OkHttpClient();
-
         Request request = new Request.Builder().url(mswUrl).build();
-        Response response = client.newCall(request).execute();
+        Response response = null;
+        try {
+            response = client.newCall(request).execute();
+        }catch (IOException mswException){
+           mswException.printStackTrace();
 
+        }
         return response.body().string();
     }
 }
