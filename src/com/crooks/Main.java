@@ -20,7 +20,6 @@ public class Main {
 
     public static void main(String[] args) throws TwitterException, IOException, InterruptedException {
         boolean cantStopThisTrain = true;
-        String lastTweet = null;
         Twitter twitter = new TwitterFactory().getSingleton();
 
         while (cantStopThisTrain == true) {
@@ -113,7 +112,7 @@ public class Main {
                 }
             }
         }
-    }
+    }//End followFollowers
 
     public static String grabJson(String mswUrl) throws IOException {
         OkHttpClient client = new OkHttpClient();
