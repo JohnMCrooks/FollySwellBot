@@ -4,34 +4,19 @@ package com.crooks;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import com.github.sarxos.webcam.*;
-import com.github.sarxos.webcam.ds.ipcam.IpCamDevice;
-import com.github.sarxos.webcam.ds.ipcam.IpCamDeviceRegistry;
-import com.github.sarxos.webcam.ds.ipcam.IpCamDriver;
-import com.github.sarxos.webcam.ds.ipcam.IpCamMode;
-import com.github.sarxos.webcam.ds.ipcam.impl.IpCamHttpClient;
-
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
 import twitter4j.*;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 
 
 public class Main {
-    static {
-        Webcam.setDriver(new IpCamDriver());
-    }
 
     public static void main(String[] args) throws TwitterException, IOException, InterruptedException {
         boolean cantStopThisTrain = true;
@@ -46,7 +31,8 @@ public class Main {
             //Oceanic forecasting can change rapidly, so I hit the API every time instead of retaining a single request and using each of the individually contained forecasts.
             String rawJson = grabJson(url);
             ObjectMapper mapper = new ObjectMapper();
-            //Map the Json into a main node
+
+            //Map the Json into a node
             JsonNode mainJson = mapper.readValue(rawJson, JsonNode.class);
             ArrayList<SwellPeriod> swellArray = new ArrayList<>();
 
@@ -67,20 +53,21 @@ public class Main {
 
             //Convert the time to non-military format
             LocalTime currentTime = LocalTime.now().truncatedTo(ChronoUnit.MINUTES);
+            String amPm = "am";
             if (currentTime.isAfter(LocalTime.NOON)){
                 currentTime = currentTime.minus(12, ChronoUnit.HOURS);
+                amPm = "pm";
             }
 
             int counter = 0;
+            //Forecast time stamps are sent as unix time stamps, This compares the current time to the forecasts to grab the one following the current time.
             while (counter < swellArray.size() - 1) {
-                //Forecast time stamps are sent as unix time stamps, This compares the current time to the forecasts to grab the one following the current time.
                 if (now.getEpochSecond() <= swellArray.get(counter + 1).getUnixTime() && now.getEpochSecond() > swellArray.get(counter).getUnixTime()) {
-                    String tweetFormmated = String.format("%s - Swell Height: %d-%d ft. with winds at %d mph out of the %s #FollyBeach #surfing #Charleston #SurfReport #MagicSeaWeed",
-                            currentTime ,swellArray.get(counter + 1).getMinHeight(), swellArray.get(counter + 1).getMaxHeight(), swellArray.get(counter + 1).getWindSpeed(), swellArray.get(counter + 1).getWindDirection());
+                    String tweetFormmated = String.format("%s %s - Swell Height: %d-%d ft. with winds at %d mph out of the %s #FollyBeach #surfing #Charleston #SurfReport #MagicSeaWeed",
+                            currentTime, amPm ,swellArray.get(counter + 1).getMinHeight(), swellArray.get(counter + 1).getMaxHeight(), swellArray.get(counter + 1).getWindSpeed(), swellArray.get(counter + 1).getWindDirection());
 
-                    //captureImage();
-                    //sendTweet(tweetFormmated);
-                    //followFollowers(twitter);
+                    sendTweet(tweetFormmated);
+                    followFollowers(twitter);
                     counter++;
                 } else {
                     counter++;
@@ -104,28 +91,6 @@ public class Main {
 
     }// End SendTweet()
 
-//    public static void captureImage(){
-//        String follyCamURL= "http://208.43.68.139/surfchex/follybeach-super/playlist.m3u8";
-//        Instant instant = Instant.now();
-//
-//        try{  IpCamDeviceRegistry.register("Folly", follyCamURL, IpCamMode.PUSH);
-//        IpCamDeviceRegistry.isRegistered(follyCamURL);
-//        }
-//        catch (IOException e){
-//          System.err.println("IpCam Registration Failed");
-//        }
-//        IpCamDevice device = new IpCamDevice();
-//
-//        BufferedImage image = device.getImage();
-//        try {
-//            ImageIO.write(image, "PNG", new File(instant+".png"));
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//
-//        System.out.println("File captured and saved at " + instant.toString());
-//    }
-
     public static void followFollowers(Twitter twitter) throws TwitterException {
         PagableResponseList<User> followersList = twitter.getFollowersList("FollySwellBot", -1);
         String[] myFollowerArray = new String[followersList.size()];
@@ -135,7 +100,6 @@ public class Main {
             myFollowerArray[count] = user.getScreenName();
             count++;
         }
-        System.out.println(myFollowerArray.toString());
         ResponseList<Friendship> friendships = twitter.lookupFriendships(myFollowerArray);
 
         //Check each follower to see if it's mutual, If it's not grab their ID and follow them back.
