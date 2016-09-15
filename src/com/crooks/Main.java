@@ -27,7 +27,7 @@ public class Main {
             String url = "http://magicseaweed.com/api/" + secretKey.key + "/forecast/?spot_id=672";
             Instant now = Instant.now();
 
-            //Oceanic forecasting can change rapidly, so I hit the API every time instead of retaining a single request and using each of the individually contained forecasts.
+            //Oceanic forecasting can change rapidly, so I hit the API every time instead of retaining a single forecast and using each of the individually contained forecasts.
             String rawJson = grabJson(url);
             ObjectMapper mapper = new ObjectMapper();
 
@@ -47,8 +47,6 @@ public class Main {
                 swellArray.add(sp);
             }
 
-            //sort the array
-            swellArray.stream().sorted((s1, s2) -> Integer.compare((int) s1.getUnixTime(), (int) s2.getUnixTime()));
 
             //Convert the time to non-military format
             LocalTime currentTime = LocalTime.now().truncatedTo(ChronoUnit.MINUTES);
@@ -57,6 +55,9 @@ public class Main {
                 currentTime = currentTime.minus(12, ChronoUnit.HOURS);
                 amPm = "pm";
             }
+
+            //sort the array
+            swellArray.stream().sorted((s1, s2) -> Integer.compare((int) s1.getUnixTime(), (int) s2.getUnixTime()));
 
             int counter = 0;
             //Forecast time stamps are sent as unix time stamps, This compares the current time to the forecasts to grab the one following the current time.
@@ -86,9 +87,7 @@ public class Main {
             System.out.println("failed to send status update at: " + LocalTime.now().truncatedTo(ChronoUnit.MINUTES));
             statusException.printStackTrace();
         }
-
-
-    }// End SendTweet()
+    }// End SendTweet
 
     public static void followFollowers(Twitter twitter) throws TwitterException {
         PagableResponseList<User> followersList = twitter.getFollowersList("FollySwellBot", -1);
@@ -99,15 +98,19 @@ public class Main {
             myFollowerArray[count] = user.getScreenName();
             count++;
         }
-        ResponseList<Friendship> friendships = twitter.lookupFriendships(myFollowerArray);
+        ResponseList<Friendship> friendshipArray = twitter.lookupFriendships(myFollowerArray);
 
         //Check each follower to see if it's mutual, If it's not grab their ID and follow them back.
-        for (Friendship friendship: friendships){
+        for (Friendship friendship: friendshipArray){
             if (!friendship.isFollowing()){
                 try{
                     twitter.createFriendship(friendship.getId());
+                    System.out.println(" Followed: " + friendship.getScreenName());
                 }catch (TwitterException addFriendFail){
                     addFriendFail.printStackTrace();
+                    Twitter twitter1 = TwitterFactory.getSingleton();
+                    DirectMessage message = twitter1.sendDirectMessage("Crooks5001",  "I'm in need of repair CodeWord:friends4life");
+                    System.out.println("Failed to Follow " + friendship.getScreenName() + " Distress call Sent");
                     continue;
                 }
             }
@@ -125,6 +128,6 @@ public class Main {
 
         }
         return response.body().string();
-    }//End grabJson()
+    }//End grabJson
 
 }//End Main.java
