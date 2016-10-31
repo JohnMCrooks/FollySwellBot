@@ -9,6 +9,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 import twitter4j.*;
+import twitter4j.api.FriendsFollowersResources;
 
 import java.io.IOException;
 import java.time.*;
@@ -59,14 +60,15 @@ public class Main {
             //sort the array
             swellArray.stream().sorted((s1, s2) -> Integer.compare((int) s1.getUnixTime(), (int) s2.getUnixTime()));
 
-            int counter = 0;
+
             //Forecast time stamps are sent as unix time stamps, This compares the current time to the forecasts to grab the one following the current time.
+            int counter = 0;
             while (counter < swellArray.size() - 1) {
                 if (now.getEpochSecond() <= swellArray.get(counter + 1).getUnixTime() && now.getEpochSecond() > swellArray.get(counter).getUnixTime()) {
                     String tweetFormmated = String.format("%s %s - Swell Height: %d-%d ft. with winds at %d mph out of the %s #FollyBeach #surfing #Charleston #SurfReport #MagicSeaWeed",
                             currentTime, amPm ,swellArray.get(counter + 1).getMinHeight(), swellArray.get(counter + 1).getMaxHeight(), swellArray.get(counter + 1).getWindSpeed(), swellArray.get(counter + 1).getWindDirection());
 
-                    sendTweet(tweetFormmated);
+//                    sendTweet(tweetFormmated);
                     followFollowers(twitter);
                     counter++;
                 } else {
@@ -100,17 +102,23 @@ public class Main {
         }
         ResponseList<Friendship> friendshipArray = twitter.lookupFriendships(myFollowerArray);
 
+        /*TODO: If a follower is set to private the pending status on the next follow cycle will crash the program. Fix this. Might have to dig into the Twitter API directly rather than rely on twitter4j...
+                Follow up with this twitter doc when you get time - https://dev.twitter.com/rest/reference/get/friendships/outgoing
+        */
+
         //Check each follower to see if it's mutual, If it's not grab their ID and follow them back.
         for (Friendship friendship: friendshipArray){
             if (!friendship.isFollowing()){
+                long id = friendship.getId();
+                
                 try{
                     twitter.createFriendship(friendship.getId());
                     System.out.println(" Followed: " + friendship.getScreenName());
                 }catch (TwitterException addFriendFail){
-                    addFriendFail.printStackTrace();
                     Twitter twitter1 = TwitterFactory.getSingleton();
                     DirectMessage message = twitter1.sendDirectMessage("Crooks5001",  "I'm in need of repair CodeWord:friends4life");
                     System.out.println("Failed to Follow " + friendship.getScreenName() + " Distress call Sent");
+                    addFriendFail.printStackTrace();
                     continue;
                 }
             }
