@@ -109,21 +109,223 @@ public class Main {
         //Check each follower to see if it's mutual, If it's not grab their ID and follow them back.
         for (Friendship friendship: friendshipArray){
             if (!friendship.isFollowing()){
-                long id = friendship.getId();
-                
-                try{
-                    twitter.createFriendship(friendship.getId());
-                    System.out.println(" Followed: " + friendship.getScreenName());
-                }catch (TwitterException addFriendFail){
-                    Twitter twitter1 = TwitterFactory.getSingleton();
-                    DirectMessage message = twitter1.sendDirectMessage("Crooks5001",  "I'm in need of repair CodeWord:friends4life");
-                    System.out.println("Failed to Follow " + friendship.getScreenName() + " Distress call Sent");
-                    addFriendFail.printStackTrace();
-                    continue;
+
+                if (!checkForPendingFriendship(friendship, twitter)){
+                    long id = friendship.getId();
+                    try {
+                        twitter.createFriendship(friendship.getId());
+                        System.out.println(" Followed: " + friendship.getScreenName());
+                    } catch (TwitterException addFriendFail) {
+                        Twitter twitter1 = TwitterFactory.getSingleton();
+                        DirectMessage message = twitter1.sendDirectMessage("Crooks5001", "I'm in need of repair CodeWord:friends4life");
+                        System.out.println("Failed to Follow " + friendship.getScreenName() + " Distress call Sent");
+                        addFriendFail.printStackTrace();
+                        continue;
+                    }
                 }
             }
         }
     }//End followFollowers
+
+    public static boolean checkForPendingFriendship(Friendship friendship, Twitter twitter) throws TwitterException {
+        boolean isPending = false;
+        FriendsFollowersResources ffr = new FriendsFollowersResources() {
+            @Override
+            public IDs getNoRetweetsFriendships() throws TwitterException {
+                return null;
+            }
+
+            @Override
+            public IDs getFriendsIDs(long l) throws TwitterException {
+                return null;
+            }
+
+            @Override
+            public IDs getFriendsIDs(long l, long l1) throws TwitterException {
+                return null;
+            }
+
+            @Override
+            public IDs getFriendsIDs(long l, long l1, int i) throws TwitterException {
+                return null;
+            }
+
+            @Override
+            public IDs getFriendsIDs(String s, long l) throws TwitterException {
+                return null;
+            }
+
+            @Override
+            public IDs getFriendsIDs(String s, long l, int i) throws TwitterException {
+                return null;
+            }
+
+            @Override
+            public IDs getFollowersIDs(long l) throws TwitterException {
+                return null;
+            }
+
+            @Override
+            public IDs getFollowersIDs(long l, long l1) throws TwitterException {
+                return null;
+            }
+
+            @Override
+            public IDs getFollowersIDs(long l, long l1, int i) throws TwitterException {
+                return null;
+            }
+
+            @Override
+            public IDs getFollowersIDs(String s, long l) throws TwitterException {
+                return null;
+            }
+
+            @Override
+            public IDs getFollowersIDs(String s, long l, int i) throws TwitterException {
+                return null;
+            }
+
+            @Override
+            public ResponseList<Friendship> lookupFriendships(long... longs) throws TwitterException {
+                return null;
+            }
+
+            @Override
+            public ResponseList<Friendship> lookupFriendships(String... strings) throws TwitterException {
+                return null;
+            }
+
+            @Override
+            public IDs getIncomingFriendships(long l) throws TwitterException {
+                return null;
+            }
+
+            @Override
+            public IDs getOutgoingFriendships(long l) throws TwitterException {
+                return null;
+            }
+
+            @Override
+            public User createFriendship(long l) throws TwitterException {
+                return null;
+            }
+
+            @Override
+            public User createFriendship(String s) throws TwitterException {
+                return null;
+            }
+
+            @Override
+            public User createFriendship(long l, boolean b) throws TwitterException {
+                return null;
+            }
+
+            @Override
+            public User createFriendship(String s, boolean b) throws TwitterException {
+                return null;
+            }
+
+            @Override
+            public User destroyFriendship(long l) throws TwitterException {
+                return null;
+            }
+
+            @Override
+            public User destroyFriendship(String s) throws TwitterException {
+                return null;
+            }
+
+            @Override
+            public Relationship updateFriendship(long l, boolean b, boolean b1) throws TwitterException {
+                return null;
+            }
+
+            @Override
+            public Relationship updateFriendship(String s, boolean b, boolean b1) throws TwitterException {
+                return null;
+            }
+
+            @Override
+            public Relationship showFriendship(long l, long l1) throws TwitterException {
+                return null;
+            }
+
+            @Override
+            public Relationship showFriendship(String s, String s1) throws TwitterException {
+                return null;
+            }
+
+            @Override
+            public PagableResponseList<User> getFriendsList(long l, long l1) throws TwitterException {
+                return null;
+            }
+
+            @Override
+            public PagableResponseList<User> getFriendsList(long l, long l1, int i) throws TwitterException {
+                return null;
+            }
+
+            @Override
+            public PagableResponseList<User> getFriendsList(String s, long l) throws TwitterException {
+                return null;
+            }
+
+            @Override
+            public PagableResponseList<User> getFriendsList(String s, long l, int i) throws TwitterException {
+                return null;
+            }
+
+            @Override
+            public PagableResponseList<User> getFriendsList(long l, long l1, int i, boolean b, boolean b1) throws TwitterException {
+                return null;
+            }
+
+            @Override
+            public PagableResponseList<User> getFriendsList(String s, long l, int i, boolean b, boolean b1) throws TwitterException {
+                return null;
+            }
+
+            @Override
+            public PagableResponseList<User> getFollowersList(long l, long l1) throws TwitterException {
+                return null;
+            }
+
+            @Override
+            public PagableResponseList<User> getFollowersList(String s, long l) throws TwitterException {
+                return null;
+            }
+
+            @Override
+            public PagableResponseList<User> getFollowersList(long l, long l1, int i) throws TwitterException {
+                return null;
+            }
+
+            @Override
+            public PagableResponseList<User> getFollowersList(String s, long l, int i) throws TwitterException {
+                return null;
+            }
+
+            @Override
+            public PagableResponseList<User> getFollowersList(long l, long l1, int i, boolean b, boolean b1) throws TwitterException {
+                return null;
+            }
+
+            @Override
+            public PagableResponseList<User> getFollowersList(String s, long l, int i, boolean b, boolean b1) throws TwitterException {
+                return null;
+            }
+        };
+
+        IDs pendingFriendID = ffr.getOutgoingFriendships(twitter.getId());
+        long[] ids = pendingFriendID.getIDs();
+        for (int i=0; i < pendingFriendID.getIDs().length; i++) {
+            if (friendship.getId() == ids[i]) {
+                isPending = true;
+                break;
+            }
+        }
+        return isPending;
+    }
 
     public static String grabJson(String mswUrl) throws IOException {
         OkHttpClient client = new OkHttpClient();
