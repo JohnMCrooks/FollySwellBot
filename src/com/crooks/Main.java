@@ -102,10 +102,6 @@ public class Main {
         }
         ResponseList<Friendship> friendshipArray = twitter.lookupFriendships(myFollowerArray);
 
-        /*TODO: If a follower is set to private the pending status on the next follow cycle will crash the program. Fix this. Might have to dig into the Twitter API directly rather than rely on twitter4j...
-                Follow up with this twitter doc when you get time - https://dev.twitter.com/rest/reference/get/friendships/outgoing
-        */
-
         //Check each follower to see if it's mutual, If it's not grab their ID and follow them back.
         for (Friendship friendship: friendshipArray){
             if (!friendship.isFollowing()){
@@ -315,13 +311,14 @@ public class Main {
                 return null;
             }
         };
-
-        IDs pendingFriendID = ffr.getOutgoingFriendships(twitter.getId());
-        long[] ids = pendingFriendID.getIDs();
-        for (int i=0; i < pendingFriendID.getIDs().length; i++) {
-            if (friendship.getId() == ids[i]) {
-                isPending = true;
-                break;
+        if (ffr.getOutgoingFriendships(twitter.getId()) !=null) {
+            IDs pendingFriendID = ffr.getOutgoingFriendships(twitter.getId());
+            long[] ids = pendingFriendID.getIDs();
+            for (int i = 0; i < pendingFriendID.getIDs().length; i++) {
+                if (friendship.getId() == ids[i]) {
+                    isPending = true;
+                    break;
+                }
             }
         }
         return isPending;
