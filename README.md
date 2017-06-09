@@ -20,10 +20,15 @@ Latest Update: added text-message alerts for a private user via Twilio (in this 
 
 ---
 
+
 ###Configuration Note:
 
+
 If deploying, this relies on a config.properties file in the same directory as the .jar file is being run in. 
+
+
 The config file will need to have the following attributes: 
+
 
 | Attribute  | Description |Expected Form|Example Value |
 |---|
@@ -41,8 +46,12 @@ The config file will need to have the following attributes:
 It Uses the MagicSeaWeed API and following libraries: Twilio, Twitter4j, OkHttp, and Jackson.
 
 https://www.MagicSeaWeed.com
+
 https://www.twilio.com/
+
 http://twitter4j.org/en/
+
 http://square.github.io/okhttp/
+
 https://github.com/FasterXML/jackson
 
