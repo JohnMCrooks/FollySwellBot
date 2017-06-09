@@ -11,24 +11,38 @@ import okhttp3.Response;
 import twitter4j.*;
 import twitter4j.api.FriendsFollowersResources;
 
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Properties;
 
+import com.twilio.Twilio;
+import com.twilio.rest.api.v2010.account.Message;
+import com.twilio.type.PhoneNumber;
 
 public class Main {
+    private static final String AUTH_TOKEN = getProperties().getProperty("AUTH_TOKEN");
+    private static final String ACCOUNT_SID = getProperties().getProperty("ACCOUNT_SID");
+    private static final String SENDER = getProperties().getProperty("SENDER");
+    private static final String RECIPIENT = getProperties().getProperty("RECIPIENT");
+    private static final String KEY = getProperties().getProperty("KEY");
+
+
 
     public static void main(String[] args) throws TwitterException, IOException, InterruptedException {
         boolean cantStopThisTrain = true;
         Twitter twitter = new TwitterFactory().getSingleton();
 
         while (cantStopThisTrain == true) {
-            MSWprop secretKey = new MSWprop();
-            String url = "http://magicseaweed.com/api/" + secretKey.key + "/forecast/?spot_id=672";
+
+            String url =  "http://magicseaweed.com/api/" + KEY + "/forecast/?spot_id=672";
             Instant now = Instant.now();
 
-            //Oceanic forecasting can change rapidly, so I hit the API every time instead of retaining a single forecast and using each of the individually contained forecasts.
+            // Oceanic forecasting can change rapidly, so I hit the API every time instead of retaining a
+            // single forecast and using each of the individually contained forecasts.
             String rawJson = grabJson(url);
             ObjectMapper mapper = new ObjectMapper();
 
@@ -57,27 +71,72 @@ public class Main {
                 amPm = "pm";
             }
 
-            //sort the array
+            //sort the array by time
             swellArray.stream().sorted((s1, s2) -> Integer.compare((int) s1.getUnixTime(), (int) s2.getUnixTime()));
 
-
-            //Forecast time stamps are sent as unix time stamps, This compares the current time to the forecasts to grab the one following the current time.
+            //Forecast time stamps are sent as unix time stamps.
+            //The entire days forecast is sent so there is need to cherry pick the most relevant time stamp.
+            //This compares the current time to the forecast times to grab the next nearest forecast.
             int counter = 0;
             while (counter < swellArray.size() - 1) {
                 if (now.getEpochSecond() <= swellArray.get(counter + 1).getUnixTime() && now.getEpochSecond() > swellArray.get(counter).getUnixTime()) {
-                    String tweetFormmated = String.format("%s %s - Swell Height: %d-%d ft. with winds at %d mph out of the %s #FollyBeach #surfing #Charleston #SurfReport #MagicSeaWeed",
-                            currentTime, amPm ,swellArray.get(counter + 1).getMinHeight(), swellArray.get(counter + 1).getMaxHeight(), swellArray.get(counter + 1).getWindSpeed(), swellArray.get(counter + 1).getWindDirection());
+                    int minHeight = swellArray.get(counter+1).getMinHeight();
+                    int maxHeight = swellArray.get(counter+1).getMaxHeight();
+                    int windSpeed = swellArray.get(counter + 1).getWindSpeed();
+                    String windDirection = swellArray.get(counter + 1).getWindDirection();
 
-//                    sendTweet(tweetFormmated);
+                    String tweetFormmated = String.format("%s %s - Swell Height: %d-%d ft. with winds at %d mph out of the %s #FollyBeach #surfing #Charleston #SurfReport #MagicSeaWeed",
+                            currentTime, amPm ,minHeight, maxHeight, windSpeed, windDirection);
+
+                    sendTweet(tweetFormmated);
+
+                    minHeight=5;
+                    if (minHeight >= 3 || maxHeight > 3) {
+                        sendTextMesage(minHeight, maxHeight, windSpeed, windDirection);
+                    }
+
                     followFollowers(twitter);
                     counter++;
                 } else {
                     counter++;
                 }
             }
+
             Thread.sleep(10800000);
         }
     } // End Main Method
+
+    // Load the Auth Keys for MagicSeaweed and Twilio API usage.
+    public static Properties getProperties(){
+        Properties prop = new Properties();
+        InputStream inputStream = null;
+        try {
+            inputStream = new FileInputStream("config.properties");
+            prop.load(inputStream);
+            return prop;
+        }
+        catch (Exception e) {
+            System.out.println("Couldn't load the configuration properties   --    \n" + e);
+            return null;
+        }
+
+    }
+
+
+    public static void sendTextMesage(int minHeight, int maxHeight, int windSpeed, String windDirection){
+        Twilio.init(ACCOUNT_SID, AUTH_TOKEN);
+        PhoneNumber recipient = new PhoneNumber(RECIPIENT);
+        PhoneNumber sender = new PhoneNumber(SENDER);
+        String formattedText = String.format("Waves are picking up: %dft - %dft winds at %dmph out of %s", minHeight, maxHeight, windSpeed, windDirection );
+        try{
+            Message message = Message.creator(recipient, sender, formattedText).create();
+        } catch (Exception e){
+            System.out.println("Failed to send text alert for some gnarly conditions, sorry buddy" );
+            e.printStackTrace();
+        }
+
+    }
+
 
     public static void sendTweet(String tweetFormmated) throws TwitterException, IOException {
         try{
@@ -102,7 +161,10 @@ public class Main {
         }
         ResponseList<Friendship> friendshipArray = twitter.lookupFriendships(myFollowerArray);
 
-        //Check each follower to see if it's mutual, If it's not grab their ID and follow them back.
+        //Check each follower to see if the bot is already following them, If it's not check for a pending status on the relationship.
+        //If there isn't a pending request, create a new friend request.
+        //Creating a pending request when there is one already in place causes the API to freak out.
+
         for (Friendship friendship: friendshipArray){
             if (!friendship.isFollowing()){
 
@@ -112,17 +174,18 @@ public class Main {
                         twitter.createFriendship(friendship.getId());
                         System.out.println(" Followed: " + friendship.getScreenName());
                     } catch (TwitterException addFriendFail) {
-                        Twitter twitter1 = TwitterFactory.getSingleton();
-                        DirectMessage message = twitter1.sendDirectMessage("Crooks5001", "I'm in need of repair CodeWord:friends4life");
-                        System.out.println("Failed to Follow " + friendship.getScreenName() + " Distress call Sent");
                         addFriendFail.printStackTrace();
-                        continue;
+                        Twitter twitter1 = TwitterFactory.getSingleton();
+                        DirectMessage message = twitter1.sendDirectMessage("Crooks5001", "I'm in need of repair: I can't make new friends");
+                        System.out.println("Failed to Follow " + friendship.getScreenName() + " Distress call Sent");
                     }
                 }
             }
         }
-    }//End followFollowers
+    } //End followFollowers
 
+
+    //Checks for pending friendships so there are no conflicts
     public static boolean checkForPendingFriendship(Friendship friendship, Twitter twitter) throws TwitterException {
         boolean isPending = false;
         FriendsFollowersResources ffr = new FriendsFollowersResources() {
@@ -335,6 +398,6 @@ public class Main {
 
         }
         return response.body().string();
-    }//End grabJson
+    }  //End grabJson
 
 }//End Main.java
