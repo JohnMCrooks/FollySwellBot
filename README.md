@@ -31,7 +31,7 @@ The config file will need to have the following attributes:
 
 
 | Attribute  | Description |Expected Form|Example Value |
-|---|
+|---| --- | --- | --- |
 |  KEY | API Key provided by MagicSeaweed.com| String | 32charactErsgivenWillDoHere!#&a |
 |  ACCOUNT_SID | Account_SID provided when you create an account with Twilio | String | 32charactErsgivenWillDoHere!#&a |
 |  AUTH_TOKEN | Provided by Twilio when you create an account. | String | any32charactErs5Will6Do$21Here!# |
@@ -41,7 +41,6 @@ The config file will need to have the following attributes:
 
 
 ---
-
 
 It Uses the MagicSeaWeed API and following libraries: Twilio, Twitter4j, OkHttp, and Jackson.
 
