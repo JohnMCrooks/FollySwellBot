@@ -62,7 +62,6 @@ public class Main {
                 swellArray.add(sp);
             }
 
-
             //Convert the time to non-military format
             LocalTime currentTime = LocalTime.now().truncatedTo(ChronoUnit.MINUTES);
             String amPm = "am";
@@ -79,20 +78,21 @@ public class Main {
             //This compares the current time to the forecast times to grab the next nearest forecast.
             int counter = 0;
             while (counter < swellArray.size() - 1) {
-                if (now.getEpochSecond() <= swellArray.get(counter + 1).getUnixTime() && now.getEpochSecond() > swellArray.get(counter).getUnixTime()) {
+                if (now.getEpochSecond() <= swellArray.get(counter + 1).getUnixTime() && now.getEpochSecond() >
+                            swellArray.get(counter).getUnixTime()) {
                     int minHeight = swellArray.get(counter+1).getMinHeight();
                     int maxHeight = swellArray.get(counter+1).getMaxHeight();
                     int windSpeed = swellArray.get(counter + 1).getWindSpeed();
                     String windDirection = swellArray.get(counter + 1).getWindDirection();
 
-                    String tweetFormmated = String.format("%s %s - Swell Height: %d-%d ft. with winds at %d mph out of the %s #FollyBeach #surfing #Charleston #SurfReport #MagicSeaWeed",
+                    String tweetFormatted = String.format("%s %s - Swell Height: %d-%d ft. with winds at %d mph out of the " +
+                            "%s #FollyBeach #surfing #Charleston #SurfReport #MagicSeaWeed",
                             currentTime, amPm ,minHeight, maxHeight, windSpeed, windDirection);
 
-                    sendTweet(tweetFormmated);
+                    sendTweet(tweetFormatted);
 
-                    minHeight=5;
                     if (minHeight >= 3 || maxHeight > 3) {
-                        sendTextMesage(minHeight, maxHeight, windSpeed, windDirection);
+                        sendTextMessage(minHeight, maxHeight, windSpeed, windDirection);
                     }
 
                     followFollowers(twitter);
@@ -123,7 +123,7 @@ public class Main {
     }
 
 
-    public static void sendTextMesage(int minHeight, int maxHeight, int windSpeed, String windDirection){
+    public static void sendTextMessage(int minHeight, int maxHeight, int windSpeed, String windDirection){
         Twilio.init(ACCOUNT_SID, AUTH_TOKEN);
         PhoneNumber recipient = new PhoneNumber(RECIPIENT);
         PhoneNumber sender = new PhoneNumber(SENDER);
@@ -138,10 +138,10 @@ public class Main {
     }
 
 
-    public static void sendTweet(String tweetFormmated) throws TwitterException, IOException {
+    public static void sendTweet(String tweetFormatted) throws TwitterException, IOException {
         try{
             Twitter twitter = TwitterFactory.getSingleton();
-            Status status = twitter.updateStatus(tweetFormmated);
+            Status status = twitter.updateStatus(tweetFormatted);
             System.out.println(Instant.now().truncatedTo(ChronoUnit.MINUTES) + " - The People have been Informed.\n");
         }
         catch(TwitterException statusException){
@@ -176,7 +176,7 @@ public class Main {
                     } catch (TwitterException addFriendFail) {
                         addFriendFail.printStackTrace();
                         Twitter twitter1 = TwitterFactory.getSingleton();
-                        DirectMessage message = twitter1.sendDirectMessage("Crooks5001", "I'm in need of repair: I can't make new friends");
+                        DirectMessage message = twitter1.sendDirectMessage("Crooks5001", "I'm in need of help, I can't make new friends");
                         System.out.println("Failed to Follow " + friendship.getScreenName() + " Distress call Sent");
                     }
                 }

@@ -10,6 +10,8 @@
 .idea/vcs.xml
 .idea/jsLibraryMappings.xml
 
+*.iml
+
 # Sensitive or high-churn files:
 .idea/dataSources.ids
 .idea/dataSources.xml
@@ -47,3 +49,6 @@ fabric.properties
 
 src/twitter4j.properties
 src/com/crooks/MSWprop.java
+/TwitterBot.iml
+.idea/shelf/
+config.properties
