@@ -21,7 +21,7 @@ Latest Update: added text-message alerts for a private user via Twilio (in this 
 ---
 
 
-###Configuration Note:
+**Configuration Note:**
 
 
 If deploying, this relies on a config.properties file in the same directory as the .jar file is being run in. 
