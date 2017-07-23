@@ -3,32 +3,35 @@ package com.crooks;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
+import com.twilio.Twilio;
+import com.twilio.rest.api.v2010.account.Message;
+import com.twilio.type.PhoneNumber;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-
+import org.apache.commons.logging.*;
 import twitter4j.*;
 import twitter4j.api.FriendsFollowersResources;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.time.*;
+import java.time.Instant;
+import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Properties;
 
-import com.twilio.Twilio;
-import com.twilio.rest.api.v2010.account.Message;
-import com.twilio.type.PhoneNumber;
-
 public class Main {
+
+    private final static Log logger = LogFactory.getLog(Main.class);
+
     private static final String AUTH_TOKEN = getProperties().getProperty("AUTH_TOKEN");
     private static final String ACCOUNT_SID = getProperties().getProperty("ACCOUNT_SID");
     private static final String SENDER = getProperties().getProperty("SENDER");
     private static final String RECIPIENT = getProperties().getProperty("RECIPIENT");
     private static final String KEY = getProperties().getProperty("KEY");
+
 
 
 
@@ -73,7 +76,7 @@ public class Main {
             //sort the array by time
             swellArray.stream().sorted((s1, s2) -> Integer.compare((int) s1.getUnixTime(), (int) s2.getUnixTime()));
 
-            //Forecast time stamps are sent as unix time stamps.
+            //Forecast times are sent as unix time stamps.
             //The entire days forecast is sent so there is need to cherry pick the most relevant time stamp.
             //This compares the current time to the forecast times to grab the next nearest forecast.
             int counter = 0;
@@ -116,10 +119,9 @@ public class Main {
             return prop;
         }
         catch (Exception e) {
-            System.out.println("Couldn't load the configuration properties   --    \n" + e);
+            logger.fatal("Couldn't load the configuration properties: " + e);
             return null;
         }
-
     }
 
 
@@ -130,9 +132,9 @@ public class Main {
         String formattedText = String.format("Waves are picking up: %dft - %dft winds at %dmph out of %s", minHeight, maxHeight, windSpeed, windDirection );
         try{
             Message message = Message.creator(recipient, sender, formattedText).create();
+            logger.info("Text Message sent Successfully, Enjoy the waves...");
         } catch (Exception e){
-            System.out.println("Failed to send text alert for some gnarly conditions, sorry buddy" );
-            e.printStackTrace();
+            logger.error("Sending a text failed with the following Exception: "+ e);
         }
 
     }
@@ -142,11 +144,11 @@ public class Main {
         try{
             Twitter twitter = TwitterFactory.getSingleton();
             Status status = twitter.updateStatus(tweetFormatted);
-            System.out.println(Instant.now().truncatedTo(ChronoUnit.MINUTES) + " - The People have been Informed.\n");
+            logger.info("Tweet has been sent, The People have been Informed.\n");
         }
         catch(TwitterException statusException){
-            System.out.println("failed to send status update at: " + LocalTime.now().truncatedTo(ChronoUnit.MINUTES));
-            statusException.printStackTrace();
+            logger.info("failed to send status update: " + LocalTime.now().truncatedTo(ChronoUnit.MINUTES));
+            logger.error("Failed status update", statusException);
         }
     }// End SendTweet
 
@@ -161,7 +163,7 @@ public class Main {
         }
         ResponseList<Friendship> friendshipArray = twitter.lookupFriendships(myFollowerArray);
 
-        //Check each follower to see if the bot is already following them, If it's not check for a pending status on the relationship.
+        //Check each follower to see if the bot is already following them. If it's not, check for a pending status on the relationship.
         //If there isn't a pending request, create a new friend request.
         //Creating a pending request when there is one already in place causes the API to freak out.
 
@@ -172,12 +174,16 @@ public class Main {
                     long id = friendship.getId();
                     try {
                         twitter.createFriendship(friendship.getId());
-                        System.out.println(" Followed: " + friendship.getScreenName());
+                        logger.info("Followed: " + friendship.getScreenName());
                     } catch (TwitterException addFriendFail) {
-                        addFriendFail.printStackTrace();
+//                        addFriendFail.printStackTrace();
                         Twitter twitter1 = TwitterFactory.getSingleton();
-                        DirectMessage message = twitter1.sendDirectMessage("Crooks5001", "I'm in need of help, I can't make new friends");
-                        System.out.println("Failed to Follow " + friendship.getScreenName() + " Distress call Sent");
+                        try {
+                            DirectMessage message = twitter1.sendDirectMessage("Crooks5001", "I'm in need of help, I can't make new friends");
+                        }catch(Exception e) {
+                            logger.error("Failed to Send DM Alert " + friendship.getScreenName() + " Distress call Sent");
+                        }
+                        logger.error("Friends are hard to make, especially  " + friendship.getScreenName() + "\n Exception: " + addFriendFail);
                     }
                 }
             }
@@ -393,9 +399,11 @@ public class Main {
         Response response = null;
         try {
             response = client.newCall(request).execute();
+            logger.info("Response from MagicSeaweed Received");
         }catch (IOException mswException){
            mswException.printStackTrace();
-
+            logger.fatal("Trouble Calling MagicSeaWeed: " + mswException);
+            return null;
         }
         return response.body().string();
     }  //End grabJson

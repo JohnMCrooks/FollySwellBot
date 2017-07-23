@@ -52,3 +52,4 @@ src/com/crooks/MSWprop.java
 /TwitterBot.iml
 .idea/shelf/
 config.properties
+/.idea/*
